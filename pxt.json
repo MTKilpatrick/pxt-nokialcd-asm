@@ -1,0 +1,24 @@
+{
+    "name": "nokialcd",
+    "version": "0.0.1",
+    "description": "MTKilpatrick Nokialcd",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "nokialcd.cpp",
+        "nokialcd.ts",
+        "shims.d.ts",
+		"sendBuffer.asm",
+        "README.md"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "public": true,
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "tsprj"
+}
