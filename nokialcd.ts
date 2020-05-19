@@ -118,7 +118,7 @@ namespace nokialcd {
  //       writeBufToLCDASM()
         let mybuf: Buffer = getBuffer()
         pins.digitalWritePin(DigitalPin.P12, 0)
-        sendBufferAsm(mybuf, DigitalPin.P15, DigitalPin.P13)
+        nokiadriverasm.sendBuffer(mybuf, DigitalPin.P15, DigitalPin.P13)
         pins.digitalWritePin(DigitalPin.P12, 1)
     }
 
