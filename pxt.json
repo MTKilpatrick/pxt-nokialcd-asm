@@ -10,7 +10,6 @@
         "nokialcd.cpp",
         "nokialcd.ts",
         "shims.d.ts",
-        "sendBuffer.asm",
         "README.md"
     ],
     "testFiles": [
