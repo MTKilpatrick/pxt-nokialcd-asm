@@ -10,7 +10,6 @@
     "files": [
         "nokialcd.cpp",
         "nokialcd.ts",
-        "shims.d.ts",
         "README.md"
     ],
     "testFiles": [
