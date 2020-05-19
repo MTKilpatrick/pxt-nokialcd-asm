@@ -30,6 +30,10 @@ enum LCDDisplayModes {
 //% weight=100 color=#0fbc11
 namespace nokialcd {
 
+    //%shim=nokialcd::getBuffer
+    function getBuffer() : Buffer {
+        return pins.createBuffer(504)
+    }
 
     //% shim=nokialcd::initBuffer
     function initBuffer(): Buffer {
@@ -39,7 +43,7 @@ namespace nokialcd {
     const FILL_X = hex`fffefcf8f0e0c08000`
     const FILL_B = hex`0103070f1f3f7fffff`
     const TWOS = hex`0102040810204080`
-    let bytearray: Buffer = initBuffer()
+//    let bytearray: Buffer = initBuffer()
     let cursorx = 0
     let cursory = 0
 
@@ -69,10 +73,6 @@ namespace nokialcd {
         }
 
     }
-	
-	//%shim=sendBufferAsm
-	function sendBuffer (buf: Buffer, datapin: DigitalPin, clk: DigitalPin) {
-	}
     
     //% shim=nokialcd::writeCharToBuf
     function writeCharToBuf(char: number, x: number, y: number) {
@@ -91,27 +91,35 @@ namespace nokialcd {
     }
 
     //% shim=nokialcd::SPIinit
-    function SPIinit(): void {
+    function SPIinit(frequency: number): void {
         return
     }
 
     //% block="reset LCD display"
     //% blockId=nokialcd_init
     export function init(): void {
-        //        pins.spiFrequency(1000000)
-        //        pins.spiFormat(8, 0)
-        SPIinit()
+        SPIinit(4000000)
     }
 
     //% shim=nokialcd::writeBufToLCD
     function writeBufToLCD(): void {
         return
     }
+    
+	//% shim=sendBufferAsm
+	function sendBufferAsm (buf: Buffer, datapin: DigitalPin, clkpin: DigitalPin) {
+        return
+	}
+
 
     //% block="update LCD display"
     //% blocId=nokialcd_show
     export function show(): void {
-        writeBufToLCD()
+ //       writeBufToLCDASM()
+        let mybuf: Buffer = getBuffer()
+        pins.digitalWritePin(DigitalPin.P12, 0)
+        sendBufferAsm(mybuf, DigitalPin.P15, DigitalPin.P13)
+        pins.digitalWritePin(DigitalPin.P12, 1)
     }
 
     //% shim=TD_ID
@@ -174,37 +182,6 @@ namespace nokialcd {
     export function displayRow(row: number): void {
     }
 
-    //% blockId=nokialcd_scroll
-    //% block="scroll display %direction=dir_conv"
-    export function scroll(direction: number): void {
-        if (direction & 1) {
-            if (direction & 2) {
-                // left
-                for (let i = 0; i < 503; i++) {
-                    bytearray[i] = bytearray[i + 1]
-                }
-                bytearray[83] = 0
-                bytearray[167] = 0
-                bytearray[251] = 0
-                bytearray[335] = 0
-                bytearray[419] = 0
-                bytearray[503] = 0
-            } else {
-                // right
-                for (let i = 503; i > 0; i--) {
-                    bytearray[i] = bytearray[i - 1]
-                }
-                bytearray[0] = 0
-                bytearray[84] = 0
-                bytearray[164] = 0
-                bytearray[252] = 0
-                bytearray[336] = 0
-                bytearray[420] = 0
-            }
-        } else {
-        }
-    }
-
     //% shim=nokialcd::setState
     function setState(s: boolean) {
         return
@@ -254,7 +231,7 @@ namespace nokialcd {
     //% block="clear screen"
     //% shim=nokialcd::clear
     export function clear(): void {
-        bytearray.fill(0)
+        return
     }
 
     //% shim=nokialcd::setYAddr
