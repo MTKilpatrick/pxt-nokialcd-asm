@@ -106,12 +106,6 @@ namespace nokialcd {
         return
     }
     
-	//% shim=sendBufferAsm
-	function sendBufferAsm (buf: Buffer, datapin: DigitalPin, clkpin: DigitalPin) {
-        return
-	}
-
-
     //% block="update LCD display"
     //% blocId=nokialcd_show
     export function show(): void {
