@@ -85,12 +85,24 @@ namespace nokialcd {
     
     const int EXT_CHARS[4] = {128, 154, 163, 247};
 
-    DigitalOut LCD_CE(mbit_p12);
-    DigitalOut LCD_RST(mbit_p8);
-    DigitalOut LCD_DC(mbit_p16);
+//    DigitalOut LCD_CE(mbit_p12);
+//    DigitalOut LCD_RST(mbit_p8);
+//    DigitalOut LCD_DC(mbit_p16);
     static Buffer bytearray = NULL;
     static bool state = true;
     static int lcdDE = 0;
+
+
+    //%
+    Buffer getBuffer() {
+        return bytearray;
+    }
+    
+    //%
+    Buffer initBuffer() {
+        bytearray = mkBuffer(NULL,504);
+        return bytearray;
+    }
 
     int charMap(int charNum) {
         //any invalid number will return SPACE
@@ -107,13 +119,13 @@ namespace nokialcd {
         }
     }
 
-    //%
     void invertCharBytes(int x, int y) {
         int offset = y * 84 + x * 7;
         for (int i = 0; i < 8; i++) {
             bytearray->data[offset + i] = ~bytearray->data[offset + i];
         }
     }
+    
     //%
     void writeCharToBuf(int charNum, int x, int y) {
         int charbase = 6 * charMap(charNum);
@@ -130,95 +142,13 @@ namespace nokialcd {
     }
 
     //%
-    void writeSPIByte(int b) {
-        LCD_CE = 0;
-        spiWrite(b);
-        LCD_CE = 1;
-    }
-    //%
-    void writeSPIBuf() {
-        LCD_CE = 0;
-        spiTransfer(bytearray, NULL);
-        LCD_CE = 1;
-    }
-    //%
-    void setYAddr(int y) {
-        LCD_DC = LCD_CMD;
-        writeSPIByte(0x40 + y);
-        LCD_DC = LCD_DAT;
-    }
-
-    //%
-    void setXAddr(int x) {
-        LCD_DC = LCD_CMD;
-        writeSPIByte(0x80 + x);
-        LCD_DC = LCD_DAT;
-    }
-
-
-    void lcdDisplayMode(int mode) {
-        lcdDE = ((mode & 2) << 1) + (mode & 1);
-        LCD_DC = LCD_CMD;
-        writeSPIByte(0x08 | lcdDE);
-        LCD_DC = LCD_DAT;
-    }
-    void writeFunctionSet(int v, int h) {
-        LCD_DC = LCD_CMD;
-        writeSPIByte(0x20 | (v << 1) | (h & 1));
-        LCD_DC = LCD_DAT;
-    }    
-    void lcdExtendedFunctions(int temp, int bias, int vop) {
-        LCD_DC = LCD_CMD;
-        writeSPIByte(0x21);
-        writeSPIByte(0x04 | (0x03 & temp));
-        writeSPIByte(0x10 | (0x07 & bias));
-        writeSPIByte(0x80 | (0x7f & vop));
-        writeSPIByte(0x20);
-        LCD_DC = LCD_DAT;
-    }
-
-    //%
     void clear() {
         for (int i = 0; i < 504; i++) {
             bytearray->data[i] = 0;
         }
     }
     
-    //%
-    void SPIinit(int frequency) {
-        LCD_CE = 1;
-        lcdDE = 0;
-        LCD_RST = 0;
-        spiFormat(8,0);
-        spiFrequency(frequency);
-        wait(0.5);
-        LCD_RST = 1;
-        writeFunctionSet(0, 1);
-        lcdExtendedFunctions(0, 3, 63);
-        writeFunctionSet(0, 0);
-        lcdDisplayMode(2);
-        setXAddr(0);
-        setYAddr(0);
-        setState(true);
-        clear();
-    }
 
-
-    //%
-    void writeBufToLCD() {
-        setYAddr(0);
-        writeSPIBuf();
-    }
-    //%
-    Buffer initBuffer() {
-        bytearray = mkBuffer(NULL,504);
-        return bytearray;
-    }
-
-    //%
-    Buffer getBuffer() {
-        return bytearray;
-    }
 
     //%
     void pixel(int x, int y, bool state) {

@@ -30,23 +30,21 @@ enum LCDDisplayModes {
 //% weight=100 color=#0fbc11
 namespace nokialcd {
 
-    //%shim=nokialcd::getBuffer
-    function getBuffer() : Buffer {
-        return pins.createBuffer(504)
-    }
-
-    //% shim=nokialcd::initBuffer
-    function initBuffer(): Buffer {
-        return pins.createBuffer(504)
-    }
-
     const FILL_X = hex`fffefcf8f0e0c08000`
     const FILL_B = hex`0103070f1f3f7fffff`
     const TWOS = hex`0102040810204080`
-//    let bytearray: Buffer = initBuffer()
+    let bytearray: Buffer = initBuffer()
     let cursorx = 0
     let cursory = 0
 
+    const LCD_CE: DigitalPin = DigitalPin.P12
+    const LCD_RST: DigitalPin = DigitalPin.P8
+    const LCD_DC: DigitalPin = DigitalPin.P16
+    const LCD_CLK: DigitalPin = DigitalPin.P13
+    const LCD_MOSI: DigitalPin = DigitalPin.P15
+    const LCD_CMD  =    0
+    const LCD_DAT  =    1
+    let lcdDE: number = 0
 
     export class Cursor {
         private _x: number
@@ -71,9 +69,23 @@ namespace nokialcd {
         public setChar(c: number) {
             return
         }
+    }
 
+    export function fill(b: number) {
+        bytearray.fill(b)
+        show()
     }
     
+        //% shim=nokialcd::getBuffer
+    function getBuffer() : Buffer {
+        return pins.createBuffer(504)
+    }
+
+    //% shim=nokialcd::initBuffer
+    function initBuffer(): Buffer {
+        return pins.createBuffer(504)
+    }
+   
     //% shim=nokialcd::writeCharToBuf
     function writeCharToBuf(char: number, x: number, y: number) {
         return
@@ -90,29 +102,91 @@ namespace nokialcd {
         cursorx += 1
     }
 
-    //% shim=nokialcd::SPIinit
-    function SPIinit(frequency: number): void {
+
+
+    function writeSPIByte(b: number) : void {
+        let buf = pins.createBuffer(1)
+        buf[0] = b
+        pins.digitalWritePin(LCD_CE, 0)
+        nokiadriverasm.sendSPIBuffer(buf, DigitalPin.P15, DigitalPin.P13)
+        pins.digitalWritePin(LCD_CE, 1)
         return
     }
+    
+    function setYAddr(y: number) : void {
+        pins.digitalWritePin(LCD_DC,LCD_CMD)
+        writeSPIByte(0x40 + y)
+        pins.digitalWritePin(LCD_DC,LCD_DAT)
+    }
+
+    function setXAddr(x: number): void {
+        pins.digitalWritePin(LCD_DC,LCD_CMD)
+        writeSPIByte(0x80 + x)
+        pins.digitalWritePin(LCD_DC,LCD_DAT)
+    }
+
+
+    function lcdDisplayMode(mode: number) : void {
+        lcdDE = ((mode & 2) << 1) + (mode & 1)
+        pins.digitalWritePin(LCD_DC,LCD_CMD)
+        writeSPIByte(0x08 | lcdDE)
+        pins.digitalWritePin(LCD_DC,LCD_DAT)
+    }
+
+    function writeFunctionSet(v: number, h: number) {
+        pins.digitalWritePin(LCD_DC,LCD_CMD)
+        writeSPIByte(0x20 | (v << 1) | (h & 1))
+        pins.digitalWritePin(LCD_DC,LCD_DAT)
+    }  
+     
+    function lcdExtendedFunctions(temp: number, bias: number, vop: number) {
+        pins.digitalWritePin(LCD_DC,LCD_CMD)
+        writeSPIByte(0x21)
+        writeSPIByte(0x04 | (0x03 & temp))
+        writeSPIByte(0x10 | (0x07 & bias))
+        writeSPIByte(0x80 | (0x7f & vop))
+        writeSPIByte(0x20)
+        pins.digitalWritePin(LCD_DC,LCD_DAT)
+    }
+
+    
+    function setSPI(frequency: number) : void {
+        pins.digitalWritePin(LCD_CLK, 0)
+        pins.digitalWritePin(LCD_MOSI, 0)
+        pins.digitalWritePin(LCD_RST, 1)
+        pins.digitalWritePin(LCD_CE,1)
+        pins.digitalWritePin(LCD_DC, LCD_DAT)
+        lcdDE = 0
+        basic.pause(500)
+        pins.digitalWritePin(LCD_RST,0)
+        basic.pause(500)
+        pins.digitalWritePin(LCD_RST,1)
+        basic.pause(500)
+        writeFunctionSet(0, 1)
+        lcdExtendedFunctions(0, 3, 63)
+        writeFunctionSet(0, 0)
+        lcdDisplayMode(2)
+        setXAddr(0)
+        setYAddr(0)
+        setState(true)
+        clear()
+    }
+
+
 
     //% block="reset LCD display"
     //% blockId=nokialcd_init
     export function init(): void {
-        SPIinit(4000000)
+        setSPI(4000000)
     }
 
-    //% shim=nokialcd::writeBufToLCD
-    function writeBufToLCD(): void {
-        return
-    }
     
     //% block="update LCD display"
     //% blocId=nokialcd_show
     export function show(): void {
- //       writeBufToLCDASM()
         let mybuf: Buffer = getBuffer()
         pins.digitalWritePin(DigitalPin.P12, 0)
-        nokiadriverasm.sendBuffer(mybuf, DigitalPin.P15, DigitalPin.P13)
+        nokiadriverasm.sendSPIBuffer(mybuf, DigitalPin.P15, DigitalPin.P13)
         pins.digitalWritePin(DigitalPin.P12, 1)
     }
 
@@ -225,21 +299,6 @@ namespace nokialcd {
     //% block="clear screen"
     //% shim=nokialcd::clear
     export function clear(): void {
-        return
-    }
-
-    //% shim=nokialcd::setYAddr
-    function setYAddr(y: number): void {
-        return
-    }
-
-    //% shim=nokialcd::setXAddr
-    function setXAddr(x: number): void {
-        return
-    }
-
-    //% shim=nokialcd::writeSPIByte
-    function writeSPIByte(b: number) {
         return
     }
 }
