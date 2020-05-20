@@ -102,8 +102,6 @@ namespace nokialcd {
         cursorx += 1
     }
 
-
-
     function writeSPIByte(b: number) : void {
         let buf = pins.createBuffer(1)
         buf[0] = b

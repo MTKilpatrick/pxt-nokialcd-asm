@@ -5,7 +5,7 @@
     "license": "MIT",
     "dependencies": {
         "core": "*",
-        "nokiadriverasm": "github:mtkilpatrick/pxt-nokiadriverasm#a05eb7779a84ddcdb55e3aba86e5b1b11603c450"
+        "nokiadriverasm": "github:mtkilpatrick/pxt-nokiadriverasm#00da9f5d9ec98b380923a7ab4ec4f6aa24e68335"
     },
     "files": [
         "nokialcd.cpp",
