@@ -94,6 +94,16 @@ namespace nokialcd {
 
 
     //%
+    void writeSPIByte(b: number)  {
+        let buf = pins.createBuffer(1)
+        buf[0] = b
+        pins.digitalWritePin(LCD_CE, 0)
+        nokiadriverasm.sendSPIBuffer(buf, DigitalPin.P15, DigitalPin.P13)
+        pins.digitalWritePin(LCD_CE, 1)
+        return
+    }
+    
+    //%
     Buffer getBuffer() {
         return bytearray;
     }
