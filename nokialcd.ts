@@ -102,10 +102,8 @@ namespace nokialcd {
         cursorx += 1
     }
 
+    //% shim=nokialcd::writeSPIByte
     function writeSPIByte(b: number) : void {
-        pins.digitalWritePin(LCD_CE, 0)
-        nokiadriverasm.sendSPIByte(b, DigitalPin.P15, DigitalPin.P13)
-        pins.digitalWritePin(LCD_CE, 1)
         return
     }
     

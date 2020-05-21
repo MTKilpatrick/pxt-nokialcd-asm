@@ -85,22 +85,30 @@ namespace nokialcd {
     
     const int EXT_CHARS[4] = {128, 154, 163, 247};
 
-//    DigitalOut LCD_CE(mbit_p12);
+    DigitalOut LCD_CE(mbit_p12);
 //    DigitalOut LCD_RST(mbit_p8);
 //    DigitalOut LCD_DC(mbit_p16);
+    const int LCD_CLK = mbit_p13;
+    const int LCD_MOSI = mbit_p15;
     static Buffer bytearray = NULL;
     static bool state = true;
     static int lcdDE = 0;
 
 
+    //% shim=nokiadriverasm::sendSPIBufferAsm
+    void sendSPIBufferAsm(Buffer b, int p1, int p2) {
+    }
+
+    //% shim=nokiadriverasm::sendSPIByteAsm
+    void sendSPIByteAsm(int b, int p1, int p2) {
+    }
+
     //%
-    void writeSPIByte(b: number)  {
-        let buf = pins.createBuffer(1)
-        buf[0] = b
-        pins.digitalWritePin(LCD_CE, 0)
-        nokiadriverasm.sendSPIBuffer(buf, DigitalPin.P15, DigitalPin.P13)
-        pins.digitalWritePin(LCD_CE, 1)
-        return
+    void writeSPIByte(int b)  {
+        LCD_CE = 0;
+        nokiadriverasm.sendSPIByteAsm(b, mpbit_p15, mbit_p13);
+        LCD_CE = 1;
+        return;
     }
     
     //%
