@@ -95,18 +95,10 @@ namespace nokialcd {
     static int lcdDE = 0;
 
 
-    //% shim=nokiadriverasm::sendSPIBufferAsm
-    void sendSPIBufferAsm(Buffer b, int p1, int p2) {
-    }
-
-    //% shim=nokiadriverasm::sendSPIByteAsm
-    void sendSPIByteAsm(int b, int p1, int p2) {
-    }
-
     //%
     void writeSPIByte(int b)  {
         LCD_CE = 0;
-        nokiadriverasm.sendSPIByteAsm(b, mpbit_p15, mbit_p13);
+        nokiadriverasm.sendSPIByteAsm(b, mbit_p15, mbit_p13);
         LCD_CE = 1;
         return;
     }
