@@ -76,7 +76,17 @@ namespace nokialcd {
         show()
     }
     
-        //% shim=nokialcd::getBuffer
+    //% shim=sendSPIBufferAsm
+    export function sendSPIBuffer(buf: Buffer, pindata: DigitalPin, pinclk: DigitalPin) {
+        return
+    }
+
+    //% shim=sendSPIByteAsm
+    export function sendSPIByte(dat: number, pindata: DigitalPin, pinclk: DigitalPin) {
+        return
+    }
+
+    //% shim=nokialcd::getBuffer
     function getBuffer() : Buffer {
         return pins.createBuffer(504)
     }
@@ -180,7 +190,7 @@ namespace nokialcd {
     export function show(): void {
         let mybuf: Buffer = getBuffer()
         pins.digitalWritePin(DigitalPin.P12, 0)
-        nokiadriverasm.sendSPIBuffer(mybuf, DigitalPin.P15, DigitalPin.P13)
+        sendSPIBuffer(mybuf, DigitalPin.P15, DigitalPin.P13)
         pins.digitalWritePin(DigitalPin.P12, 1)
     }
 
