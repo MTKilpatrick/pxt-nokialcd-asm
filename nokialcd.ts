@@ -16,27 +16,9 @@ enum Scrolls {
     //% block="Left"
     Left = 3
 }
-enum LCDDisplayModes {
-    //% block="Normal"
-    Normal = 0,
-    //% block="Blank"
-    Blank = 1,
-    //% block="All on"
-    AllOn = 2,
-    //% block="Inverse"
-    Inverse = 3
-}
 
 //% weight=100 color=#0fbc11
 namespace nokialcd {
-
-    const FILL_X = hex`fffefcf8f0e0c08000`
-    const FILL_B = hex`0103070f1f3f7fffff`
-    const TWOS = hex`0102040810204080`
-    let bytearray: Buffer = initBuffer()
-    let cursorx = 0
-    let cursory = 0
-
     const LCD_CE: DigitalPin = DigitalPin.P12
     const LCD_RST: DigitalPin = DigitalPin.P8
     const LCD_DC: DigitalPin = DigitalPin.P16
@@ -45,6 +27,58 @@ namespace nokialcd {
     const LCD_CMD  =    0
     const LCD_DAT  =    1
     let lcdDE: number = 0
+
+    // shim for the assember code - this calls from the assembler from TS
+    // I use this for sending the control bytes to configure the LCD display
+    // and it works correctly when called from Typescript like this
+    //% shim=sendSPIByteAsm
+    export function sendSPIByte(dat: number, pindata: DigitalPin, pinclk: DigitalPin) {
+        return
+    }
+
+    // Write byte function - this is called by the init() routine.
+    function writeSPIByte(b: number) : void {
+        pins.digitalWritePin(LCD_CE, 0)
+        sendSPIByte(b, LCD_MOSI, LCD_CLK)
+        pins.digitalWritePin(LCD_CE, 1)
+    } 
+
+    // Shim for the C++ function which is then calls the other assembler routine
+    // for sending a buffer to the LCD display. See the .cpp file
+    //
+    //% shim=nokialcd::writeSPIBufferC
+    function writeSPIBufferC(b: Buffer, pina: DigitalPin, pinb: DigitalPin) {
+        return
+    }
+
+    // shim for mapping the assembler buffer code to the TS function
+    //% shim=sendSPIBufferAsm
+    function writeSPIBufferTS(buf: Buffer, pina: DigitalPin, pinb: DigitalPin) {
+        return
+    }
+
+    // Send the buffer to the display (get the buffer first from the C++ realm)
+    // To call the assembler code directy from Typescrip, use writeSPIBufferTS()
+    // To call the assembler from C++, call the C++ fuction writeSPIBufferC
+    //% block="update LCD display"
+    //% blocId=nokialcd_show
+    export function show(): void {
+        let mybuf: Buffer = getBuffer()
+        pins.digitalWritePin(LCD_CE, 0)
+//        writeSPIBufferTS(mybuf, LCD_MOSI, LCD_CLK)
+        writeSPIBufferC(mybuf, LCD_MOSI, LCD_CLK)
+        pins.digitalWritePin(LCD_CE, 1)
+    }
+
+
+
+    const FILL_X = hex`fffefcf8f0e0c08000`
+    const FILL_B = hex`0103070f1f3f7fffff`
+    const TWOS = hex`0102040810204080`
+    let bytearray: Buffer = initBuffer()
+    let cursorx = 0
+    let cursory = 0
+
 
     export class Cursor {
         private _x: number
@@ -76,16 +110,6 @@ namespace nokialcd {
         show()
     }
     
-    //% shim=sendSPIBufferAsm
-    export function sendSPIBuffer(buf: Buffer, pindata: DigitalPin, pinclk: DigitalPin) {
-        return
-    }
-
-    //% shim=sendSPIByteAsm
-    export function sendSPIByte(dat: number, pindata: DigitalPin, pinclk: DigitalPin) {
-        return
-    }
-
     //% shim=nokialcd::getBuffer
     function getBuffer() : Buffer {
         return pins.createBuffer(504)
@@ -112,10 +136,9 @@ namespace nokialcd {
         cursorx += 1
     }
 
-    //% shim=nokialcd::writeSPIByte
-    function writeSPIByte(b: number) : void {
-        return
-    }
+
+
+
     
     function setYAddr(y: number) : void {
         pins.digitalWritePin(LCD_DC,LCD_CMD)
@@ -185,14 +208,6 @@ namespace nokialcd {
     }
 
     
-    //% block="update LCD display"
-    //% blocId=nokialcd_show
-    export function show(): void {
-        let mybuf: Buffer = getBuffer()
-        pins.digitalWritePin(DigitalPin.P12, 0)
-        sendSPIBuffer(mybuf, DigitalPin.P15, DigitalPin.P13)
-        pins.digitalWritePin(DigitalPin.P12, 1)
-    }
 
     //% shim=TD_ID
     //% blockId="dir_conv" block="%dir"
@@ -204,7 +219,7 @@ namespace nokialcd {
     //% shim=TD_ID
     //% blockId="displaymode_conv" block="%displaymode"
     //% blockHidden=true
-    export function lcddm(displaymode: LCDDisplayModes): number {
+    export function lcddm(displaymode: number): number {
         return (displaymode || 0)
     }
 

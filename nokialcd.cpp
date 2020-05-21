@@ -16,18 +16,19 @@
 #define SCROLL_LEFT                     3            
 
 using namespace pxt;
-
-namespace pins
-{
-    extern SPI* allocSPI();
-    extern int  spiWrite(int value);
-    extern void spiFrequency(int frequency);
-    extern void spiFormat(int bits, int mode);
-    extern void spiTransfer(Buffer command, Buffer response);
-}
 using namespace pins;
 
 namespace nokialcd {
+    // shim for the assember function in SPI.asm.
+    //% shim=nokialcd::sendSPIBufferAsm
+    void sendSPIBufferAsm(Buffer b, int datapin, int clockpin) {
+    }
+
+    // a wrapper function to test calling the assembler from C++   
+    //%
+    void writeSPIBufferC(Buffer b, int datapin, int clockpin)  {
+        sendSPIBufferAsm(b, datapin, clockpin);
+    }
 
     const uint8_t CHAR_BYTES[600] = {
         // definition of all characters from 32 to 127, then any extended chars desired
@@ -85,23 +86,13 @@ namespace nokialcd {
     
     const int EXT_CHARS[4] = {128, 154, 163, 247};
 
-    DigitalOut LCD_CE(mbit_p12);
+//    DigitalOut LCD_CE(mbit_p12);
 //    DigitalOut LCD_RST(mbit_p8);
 //    DigitalOut LCD_DC(mbit_p16);
-    const int LCD_CLK = mbit_p13;
-    const int LCD_MOSI = mbit_p15;
     static Buffer bytearray = NULL;
     static bool state = true;
     static int lcdDE = 0;
 
-
-    //%
-    void writeSPIByte(int b)  {
-        LCD_CE = 0;
-        nokiadriverasm.sendSPIByteAsm(b, mbit_p15, mbit_p13);
-        LCD_CE = 1;
-        return;
-    }
     
     //%
     Buffer getBuffer() {
