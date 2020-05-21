@@ -4,12 +4,12 @@
     "description": "MTKilpatrick Nokialcd",
     "license": "MIT",
     "dependencies": {
-        "core": "*",
-        "nokiadriverasm": "github:mtkilpatrick/pxt-nokiadriverasm#979113c1a48d79c020d718cd1d93eeb6a7711b3a"
+        "core": "*"
     },
     "files": [
-        "nokialcd.cpp",
         "nokialcd.ts",
+        "nokialcd.cpp",
+        "SPI.asm",
         "README.md"
     ],
     "testFiles": [
