@@ -22,6 +22,7 @@ namespace nokialcd {
     // shim for the assember function in SPI.asm.
     //% shim=nokialcd::sendSPIBufferAsm
     void sendSPIBufferAsm(Buffer b, int datapin, int clockpin) {
+        return;
     }
 
     // a wrapper function to test calling the assembler from C++   

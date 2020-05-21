@@ -65,8 +65,8 @@ namespace nokialcd {
     export function show(): void {
         let mybuf: Buffer = getBuffer()
         pins.digitalWritePin(LCD_CE, 0)
-//        writeSPIBufferTS(mybuf, LCD_MOSI, LCD_CLK)
-        writeSPIBufferC(mybuf, LCD_MOSI, LCD_CLK)
+        writeSPIBufferTS(mybuf, LCD_MOSI, LCD_CLK)
+//        writeSPIBufferC(mybuf, LCD_MOSI, LCD_CLK)
         pins.digitalWritePin(LCD_CE, 1)
     }
 
