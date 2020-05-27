@@ -28,32 +28,19 @@ namespace nokialcd {
     const LCD_DAT  =    1
     let lcdDE: number = 0
 
+
+
+    // shim for mapping the assembler buffer code to the TS function
+    //% shim=sendSPIBufferAsm
+    function sendSPIBuffer(buf: Buffer, pina: DigitalPin, pinb: DigitalPin, pinc: DigitalPin) {
+        return
+    }
+
     // shim for the assember code - this calls from the assembler from TS
     // I use this for sending the control bytes to configure the LCD display
     // and it works correctly when called from Typescript like this
     //% shim=sendSPIByteAsm
-    export function sendSPIByte(dat: number, pindata: DigitalPin, pinclk: DigitalPin) {
-        return
-    }
-
-    // Write byte function - this is called by the init() routine.
-    function writeSPIByte(b: number) : void {
-        pins.digitalWritePin(LCD_CE, 0)
-        sendSPIByte(b, LCD_MOSI, LCD_CLK)
-        pins.digitalWritePin(LCD_CE, 1)
-    } 
-
-    // Shim for the C++ function which is then calls the other assembler routine
-    // for sending a buffer to the LCD display. See the .cpp file
-    //
-    //% shim=nokialcd::writeSPIBufferC
-    function writeSPIBufferC(b: Buffer, pina: DigitalPin, pinb: DigitalPin) {
-        return
-    }
-
-    // shim for mapping the assembler buffer code to the TS function
-    //% shim=sendSPIBufferAsm
-    function writeSPIBufferTS(buf: Buffer, pina: DigitalPin, pinb: DigitalPin) {
+    export function sendSPIByte(dat: number, pindata: DigitalPin, pinclk: DigitalPin, pince: DigitalPin) {
         return
     }
 
@@ -63,11 +50,7 @@ namespace nokialcd {
     //% block="update LCD display"
     //% blocId=nokialcd_show
     export function show(): void {
-        let mybuf: Buffer = getBuffer()
-        pins.digitalWritePin(LCD_CE, 0)
-        writeSPIBufferTS(mybuf, LCD_MOSI, LCD_CLK)
-//        writeSPIBufferC(mybuf, LCD_MOSI, LCD_CLK)
-        pins.digitalWritePin(LCD_CE, 1)
+        sendSPIBuffer(getBuffer(), LCD_MOSI, LCD_CLK, LCD_CE)
     }
 
 
@@ -137,74 +120,62 @@ namespace nokialcd {
     }
 
 
-
-
-    
-    function setYAddr(y: number) : void {
+    function cmdSPI(b: number) : void {
         pins.digitalWritePin(LCD_DC,LCD_CMD)
-        writeSPIByte(0x40 + y)
+        sendSPIByte(b, LCD_MOSI, LCD_CLK, LCD_CE)
         pins.digitalWritePin(LCD_DC,LCD_DAT)
     }
 
+    
+    function setYAddr(y: number) : void {
+        cmdSPI(0x40 + y)
+    }
+
     function setXAddr(x: number): void {
-        pins.digitalWritePin(LCD_DC,LCD_CMD)
-        writeSPIByte(0x80 + x)
-        pins.digitalWritePin(LCD_DC,LCD_DAT)
+        cmdSPI(0x80 + x)
     }
 
 
     function lcdDisplayMode(mode: number) : void {
         lcdDE = ((mode & 2) << 1) + (mode & 1)
-        pins.digitalWritePin(LCD_DC,LCD_CMD)
-        writeSPIByte(0x08 | lcdDE)
-        pins.digitalWritePin(LCD_DC,LCD_DAT)
+        cmdSPI(0x08 | lcdDE)
     }
 
     function writeFunctionSet(v: number, h: number) {
-        pins.digitalWritePin(LCD_DC,LCD_CMD)
-        writeSPIByte(0x20 | (v << 1) | (h & 1))
-        pins.digitalWritePin(LCD_DC,LCD_DAT)
+        cmdSPI(0x20 | (v << 1) | (h & 1))
     }  
      
     function lcdExtendedFunctions(temp: number, bias: number, vop: number) {
         pins.digitalWritePin(LCD_DC,LCD_CMD)
-        writeSPIByte(0x21)
-        writeSPIByte(0x04 | (0x03 & temp))
-        writeSPIByte(0x10 | (0x07 & bias))
-        writeSPIByte(0x80 | (0x7f & vop))
-        writeSPIByte(0x20)
+        sendSPIByte(0x21, LCD_MOSI, LCD_CLK, LCD_CE)
+        sendSPIByte(0x04 | (0x03 & temp), LCD_MOSI, LCD_CLK, LCD_CE)
+        sendSPIByte(0x10 | (0x07 & bias), LCD_MOSI, LCD_CLK, LCD_CE)
+        sendSPIByte(0x80 | (0x7f & vop), LCD_MOSI, LCD_CLK, LCD_CE)
+        sendSPIByte(0x20, LCD_MOSI, LCD_CLK, LCD_CE)
         pins.digitalWritePin(LCD_DC,LCD_DAT)
     }
 
     
-    function setSPI(frequency: number) : void {
+
+    //% block="reset LCD display"
+    //% blockId=nokialcd_init
+    export function init():  void {
         pins.digitalWritePin(LCD_CLK, 0)
         pins.digitalWritePin(LCD_MOSI, 0)
         pins.digitalWritePin(LCD_RST, 1)
         pins.digitalWritePin(LCD_CE,1)
         pins.digitalWritePin(LCD_DC, LCD_DAT)
         lcdDE = 0
-        basic.pause(500)
+        basic.pause(100)
         pins.digitalWritePin(LCD_RST,0)
-        basic.pause(500)
+        basic.pause(100)
         pins.digitalWritePin(LCD_RST,1)
-        basic.pause(500)
-        writeFunctionSet(0, 1)
         lcdExtendedFunctions(0, 3, 63)
-        writeFunctionSet(0, 0)
         lcdDisplayMode(2)
         setXAddr(0)
         setYAddr(0)
         setState(true)
         clear()
-    }
-
-
-
-    //% block="reset LCD display"
-    //% blockId=nokialcd_init
-    export function init(): void {
-        setSPI(4000000)
     }
 
     

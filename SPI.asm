@@ -3,8 +3,9 @@ sendSPIBufferAsm:
  	; arguments are: r0 - buffer, r1 - data pin, r2 - clock pin
     push {r4,r5,r6,r7,lr}
     
-    mov r6, r1
-    mov r7, r2
+    mov r6, r1 ; save datapin in r6
+    mov r7, r2 ; save clock pin in r7
+    mov r8, r3 ; save chip select in r8
 
     mov r4, r0 ; save buff
     mov r0, r4
@@ -15,7 +16,14 @@ sendSPIBufferAsm:
     bl BufferMethods::getBytes
     mov r4, r0          ; r4 points to the data
     
-    ; load pin address
+
+    mov r0, r8  ; get CE pin
+    bl pins::getPinAddress
+    ldr r0, [r0, #8] ; get mbed DigitalOut from MicroBitPin
+    ldr r0, [r0, #4] ; r1-mask for this pin
+    mov r8, r0    ; save CE mask
+
+    ; load data pin address
     mov r0, r6
     bl pins::getPinAddress
     ldr r0, [r0, #8] ; get mbed DigitalOut from MicroBitPin
@@ -28,6 +36,10 @@ sendSPIBufferAsm:
     ldr r1, [r0, #4] ; r1-mask for this pin
     ldr r2, [r0, #16] ; r2-clraddr
     ldr r3, [r0, #12] ; r3-setaddr
+
+    ; set CE low
+    mov r0, r8
+    str r0, [r2, #0]
 
 
     ; r0    to bloaded with buffer data
@@ -43,7 +55,7 @@ sendSPIBufferAsm:
 .dohigh:                                    ; C6
     str r6, [r3, #0]    ; set data pin  hi  ; C8
     lsrs r7, r7, #1     ; r6 >>= 1          ; C9
-    str r1, [r3, #0]    ; clock -> high     ; C11    
+    str r1, [r3, #0]    ; clock -> high     ; C11
     beq .nextbyte                           ; C12           
 .common:                                    ; C0
     tst r7, r0                              ; C1
@@ -61,7 +73,7 @@ sendSPIBufferAsm:
     str r1, [r3, #0]    ; clock -> high     ; C19
     bne .common                             ; C22
 .nextbyte:
-    adds r4, #1         ; r4++       C9
+    adds r4, #1        ; r4++       C9
     subs r5, #1         ; r5--       C10
     beq .stop          ; if (r5=0) 
 .start:                                     ; C0
@@ -70,15 +82,27 @@ sendSPIBufferAsm:
     b .common    
 .stop:
     str r1, [r2, #0]    ; clock pin := lo
+    ; set CE high
+    mov r0, r8
+    str r0, [r3, #0]
     pop {r4,r5,r6,r7,pc}
+
 
 sendSPIByteAsm:
  	; arguments are: r0 - buffer, r1 - data pin, r2 - clock pin
     push {r4,r5,r6,r7,lr}
    
     mov r5, r0  ; save the byte
-    mov r6, r1
-    mov r7, r2
+    mov r6, r1 ; save datapin in r6
+    mov r7, r2 ; save clock pin in r7
+    mov r8, r3 ; save chip select in r8
+
+    mov r0, r8  ; get CE pin
+    bl pins::getPinAddress
+    ldr r0, [r0, #8] ; get mbed DigitalOut from MicroBitPin
+    ldr r0, [r0, #4] ; r1-mask for this pin
+    mov r8, r0    ; save CE mask
+
 
     ; load data pin address
     mov r0, r6
@@ -94,6 +118,9 @@ sendSPIByteAsm:
     ldr r2, [r0, #16] ; r2-clraddr
     ldr r3, [r0, #12] ; r3-setaddr
 
+    ; set CE low
+    mov r0, r8
+    str r0, [r2, #0]
 
     ; r0    not used
     ; r1    mask byte for clock pin
@@ -106,8 +133,6 @@ sendSPIByteAsm:
 
     movs r7, #0x80      ; reset mask        ; C1
     b .bcommon
-
-
 .bdohigh:                                   ; C6
     str r6, [r3, #0]    ; set data pin  hi  ; C8
     lsrs r7, r7, #1     ; r6 >>= 1          ; C9
@@ -123,4 +148,7 @@ sendSPIByteAsm:
     bne .bcommon                            ; C12   
 .bstop:
     str r1, [r2, #0]    ; clock pin := lo
+    ; set CE high
+    mov r0, r8
+    str r0, [r3, #0]
     pop {r4,r5,r6,r7,pc}

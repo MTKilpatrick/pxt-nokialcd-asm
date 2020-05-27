@@ -16,21 +16,8 @@
 #define SCROLL_LEFT                     3            
 
 using namespace pxt;
-using namespace pins;
 
 namespace nokialcd {
-    // shim for the assember function in SPI.asm.
-    //% shim=nokialcd::sendSPIBufferAsm
-    void sendSPIBufferAsm(Buffer b, int datapin, int clockpin) {
-        return;
-    }
-
-    // a wrapper function to test calling the assembler from C++   
-    //%
-    void writeSPIBufferC(Buffer b, int datapin, int clockpin)  {
-        sendSPIBufferAsm(b, datapin, clockpin);
-    }
-
     const uint8_t CHAR_BYTES[600] = {
         // definition of all characters from 32 to 127, then any extended chars desired
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5f, 0x5f, 0x00, 0x00, // SPACE and pling
@@ -94,6 +81,10 @@ namespace nokialcd {
     static bool state = true;
     static int lcdDE = 0;
 
+    //%
+    int getCEPin() {
+        return mbit_p12;
+    }
     
     //%
     Buffer getBuffer() {
