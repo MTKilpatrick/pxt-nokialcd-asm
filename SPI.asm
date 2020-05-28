@@ -56,11 +56,20 @@ sendSPIBufferAsm:
     str r6, [r3, #0]    ; set data pin  hi  ; C8
     lsrs r7, r7, #1     ; r6 >>= 1          ; C9
     str r1, [r3, #0]    ; clock -> high     ; C11
-    beq .nextbyte                           ; C12           
+    beq .nextbyte                           ; C12
+    tst r7, r0                              ; C13
+    str r1, [r2, #0]    ; clock pin := lo   ; C15
+    beq .dolow  ; r3 is high set so...      ; C16
+    ; data pin is already high
+    lsrs r7, r7, #1     ; r6 >>= 1          ; C17
+    str r1, [r3, #0]    ; clock -> high     ; C19
+    beq .nextbyte                           ; C22
+
 .common:                                    ; C0
     tst r7, r0                              ; C1
     str r1, [r2, #0]    ; clock pin := lo   ; C3
     bne .dohigh  ; r3 is high set so...     ; C4
+.dolow:
     str r6, [r2, #0]  ; set data pin low    ; C6
     lsrs r7, r7, #1     ; r6 >>= 1          ; C7
     str r1, [r3, #0]    ; clock -> high     ; C9
@@ -68,10 +77,10 @@ sendSPIBufferAsm:
     tst r7, r0                              ; C11
     str r1, [r2, #0]    ; clock pin := lo   ; C13
     bne .dohigh  ; r3 is high set so...     ; C14
-    str r6, [r2, #0]  ; set data pin low    ; C16
-    lsrs r7, r7, #1     ; r6 >>= 1          ; C17
-    str r1, [r3, #0]    ; clock -> high     ; C19
-    bne .common                             ; C22
+    ; data pin is already low
+    lsrs r7, r7, #1     ; r6 >>= 1          ; C15
+    str r1, [r3, #0]    ; clock -> high     ; C17
+    bne .common                             ; C20
 .nextbyte:
     adds r4, #1        ; r4++       C9
     subs r5, #1         ; r5--       C10

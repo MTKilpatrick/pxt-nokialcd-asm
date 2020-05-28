@@ -24,8 +24,8 @@ namespace nokialcd {
     const LCD_DC: DigitalPin = DigitalPin.P16
     const LCD_CLK: DigitalPin = DigitalPin.P13
     const LCD_MOSI: DigitalPin = DigitalPin.P15
-    const LCD_CMD  =    0
-    const LCD_DAT  =    1
+    const LCD_CMD = 0
+    const LCD_DAT = 1
     let lcdDE: number = 0
 
 
@@ -92,9 +92,9 @@ namespace nokialcd {
         bytearray.fill(b)
         show()
     }
-    
+
     //% shim=nokialcd::getBuffer
-    function getBuffer() : Buffer {
+    function getBuffer(): Buffer {
         return pins.createBuffer(504)
     }
 
@@ -102,7 +102,7 @@ namespace nokialcd {
     function initBuffer(): Buffer {
         return pins.createBuffer(504)
     }
-   
+
     //% shim=nokialcd::writeCharToBuf
     function writeCharToBuf(char: number, x: number, y: number) {
         return
@@ -111,7 +111,7 @@ namespace nokialcd {
     //% block="show char %char at x% %y"
     //% blockId=nokialcd_show_char
     export function showChar(charNum: number) {
-        if (cursorx > 11 ) {
+        if (cursorx > 11) {
             cursorx = 0
             cursory++
         }
@@ -120,14 +120,14 @@ namespace nokialcd {
     }
 
 
-    function cmdSPI(b: number) : void {
-        pins.digitalWritePin(LCD_DC,LCD_CMD)
+    function cmdSPI(b: number): void {
+        pins.digitalWritePin(LCD_DC, LCD_CMD)
         sendSPIByte(b, LCD_MOSI, LCD_CLK, LCD_CE)
-        pins.digitalWritePin(LCD_DC,LCD_DAT)
+        pins.digitalWritePin(LCD_DC, LCD_DAT)
     }
 
-    
-    function setYAddr(y: number) : void {
+
+    function setYAddr(y: number): void {
         cmdSPI(0x40 + y)
     }
 
@@ -136,40 +136,40 @@ namespace nokialcd {
     }
 
 
-    function lcdDisplayMode(mode: number) : void {
+    function lcdDisplayMode(mode: number): void {
         lcdDE = ((mode & 2) << 1) + (mode & 1)
         cmdSPI(0x08 | lcdDE)
     }
 
     function writeFunctionSet(v: number, h: number) {
         cmdSPI(0x20 | (v << 1) | (h & 1))
-    }  
-     
+    }
+
     function lcdExtendedFunctions(temp: number, bias: number, vop: number) {
-        pins.digitalWritePin(LCD_DC,LCD_CMD)
+        pins.digitalWritePin(LCD_DC, LCD_CMD)
         sendSPIByte(0x21, LCD_MOSI, LCD_CLK, LCD_CE)
         sendSPIByte(0x04 | (0x03 & temp), LCD_MOSI, LCD_CLK, LCD_CE)
         sendSPIByte(0x10 | (0x07 & bias), LCD_MOSI, LCD_CLK, LCD_CE)
         sendSPIByte(0x80 | (0x7f & vop), LCD_MOSI, LCD_CLK, LCD_CE)
         sendSPIByte(0x20, LCD_MOSI, LCD_CLK, LCD_CE)
-        pins.digitalWritePin(LCD_DC,LCD_DAT)
+        pins.digitalWritePin(LCD_DC, LCD_DAT)
     }
 
-    
+
 
     //% block="reset LCD display"
     //% blockId=nokialcd_init
-    export function init():  void {
+    export function init(): void {
         pins.digitalWritePin(LCD_CLK, 0)
         pins.digitalWritePin(LCD_MOSI, 0)
         pins.digitalWritePin(LCD_RST, 1)
-        pins.digitalWritePin(LCD_CE,1)
+        pins.digitalWritePin(LCD_CE, 1)
         pins.digitalWritePin(LCD_DC, LCD_DAT)
         lcdDE = 0
         basic.pause(100)
-        pins.digitalWritePin(LCD_RST,0)
+        pins.digitalWritePin(LCD_RST, 0)
         basic.pause(100)
-        pins.digitalWritePin(LCD_RST,1)
+        pins.digitalWritePin(LCD_RST, 1)
         lcdExtendedFunctions(0, 3, 63)
         lcdDisplayMode(2)
         setXAddr(0)
@@ -178,7 +178,7 @@ namespace nokialcd {
         clear()
     }
 
-    
+
 
     //% shim=TD_ID
     //% blockId="dir_conv" block="%dir"
